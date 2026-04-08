@@ -1,23 +1,46 @@
-import './globals.css';
 import Link from 'next/link';
-import { ChatBot } from '@/components/ChatBot';
+import type { ReactNode } from 'react';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import { ChatBot } from '@agro/ui';
+
+import './globals.css';
+
+const navigation = [
+  { href: '/', label: 'Головна' },
+  { href: '/catalog', label: 'Каталог' },
+  { href: '/solutions', label: 'Рішення' },
+  { href: '/services', label: 'Сервіси' },
+  { href: '/blog', label: 'Блог' },
+  { href: '/contacts', label: 'Контакти' }
+];
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="uk">
       <body>
-        <header className="border-b bg-white">
-          <nav className="mx-auto flex max-w-6xl gap-6 p-4">
-            <Link href="/" className="font-semibold text-brand-700">Agro AI</Link>
-            <Link href="/catalog">Каталог</Link>
-            <Link href="/solutions">Рішення</Link>
-            <Link href="/services">Сервіси</Link>
-            <Link href="/blog">Блог</Link>
-            <Link href="/contacts">Контакти</Link>
-          </nav>
-        </header>
-        <main className="mx-auto max-w-6xl p-4">{children}</main>
-        <ChatBot />
+        <div className="min-h-screen">
+          <header className="border-b border-stone-200 bg-white/90 backdrop-blur">
+            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+              <Link href="/" className="text-xl font-semibold text-brand-900">
+                Vitera Agro Platform
+              </Link>
+              <nav className="flex gap-6 text-sm text-stone-600">
+                {navigation.map((item) => (
+                  <Link key={item.href} href={item.href} className="hover:text-brand-700">
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </header>
+          <main>{children}</main>
+          <footer className="border-t border-stone-200 bg-white">
+            <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-stone-500">
+              Vitera Ukraine B2B platform scaffold for catalog, AI recommendations, and lead capture.
+            </div>
+          </footer>
+          <ChatBot />
+        </div>
       </body>
     </html>
   );

@@ -1,25 +1,29 @@
-version: '3.9'
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    container_name: vitera-postgres
+    restart: unless-stopped
     environment:
+      POSTGRES_DB: vitera_b2b
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: agro_ai
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - vitera_postgres_data:/var/lib/postgresql/data
 
   meilisearch:
-    image: getmeili/meilisearch:v1.11
+    image: getmeili/meilisearch:v1.12
+    container_name: vitera-meilisearch
+    restart: unless-stopped
     environment:
+      MEILI_ENV: development
       MEILI_MASTER_KEY: masterKey
     ports:
-      - '7700:7700'
+      - "7700:7700"
     volumes:
-      - meili_data:/meili_data
+      - vitera_meili_data:/meili_data
 
 volumes:
-  pgdata:
-  meili_data:
+  vitera_postgres_data:
+  vitera_meili_data:

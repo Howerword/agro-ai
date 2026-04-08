@@ -1,11 +1,21 @@
 {
-  "name": "agro-ai-platform",
+  "name": "vitera-b2b-platform",
   "private": true,
-  "packageManager": "pnpm@9.12.3",
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
-    "format": "pnpm -r format"
+    "dev:frontend": "npm run dev -w @agro/frontend",
+    "dev:backend": "npm run start:dev -w @agro/backend",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "db:generate": "npm run prisma:generate -w @agro/backend",
+    "db:push": "npm run prisma:push -w @agro/backend",
+    "db:migrate": "npm run prisma:migrate -w @agro/backend",
+    "db:seed": "npm run prisma:seed -w @agro/backend",
+    "import:vitera": "npm run import:vitera -w @agro/backend",
+    "import:vitera:db": "npm run import:vitera:db -w @agro/backend"
   }
 }

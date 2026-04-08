@@ -1,13 +1,19 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './app/**/*.{ts,tsx}',
+    '../../packages/ui/src/**/*.{ts,tsx}'
+  ],
   theme: {
     extend: {
       colors: {
         brand: {
-          500: '#2f7f3f',
-          700: '#1f5a2b'
+          50: '#f7f4ed',
+          100: '#ebe2d1',
+          500: '#7c9a45',
+          700: '#42572b',
+          900: '#1f2718'
         }
       }
     }

@@ -1,81 +1,93 @@
 import { Injectable } from '@nestjs/common';
-import { ProductsService } from '../products/products.service';
-import { AiService } from '../services/ai.service';
+import { ConfigService } from '@nestjs/config';
+import Groq from 'groq-sdk';
 
-const SYSTEM_PROMPT = `Ти агроном-консультант. Відповідай коротко, практично і українською мовою.
-Повертай тільки рекомендації для B2B агроклієнтів.`;
-
-type BotIntent = 'selection' | 'consultation' | 'product';
+import { PrismaService } from '../prisma/prisma.service';
+import { SearchService } from '../search/search.service';
+import { BotQueryDto } from './dto/bot-query.dto';
 
 @Injectable()
 export class BotService {
   constructor(
-    private readonly aiService: AiService,
-    private readonly productsService: ProductsService
+    private readonly prisma: PrismaService,
+    private readonly searchService: SearchService,
+    private readonly configService: ConfigService
   ) {}
 
-  async query(message: string) {
-    const intent = this.detectIntent(message);
+  async query(dto: BotQueryDto) {
+    const relevantProducts = await this.searchService.searchProducts(dto.message, dto.crop);
+    const relevantPrograms = await this.prisma.program.findMany({
+      where: {
+        ...(dto.crop ? { targetCrops: { has: dto.crop } } : {}),
+        ...(dto.problem ? { targetProblems: { has: dto.problem } } : {})
+      },
+      take: 3
+    });
 
-    if (intent === 'product') {
-      const products = await this.productsService.findAll({ q: message });
-      const shortlisted = products.slice(0, 3);
+    const productContext = relevantProducts
+      .map(
+        (product: {
+          name: string;
+          slug: string;
+          shortDescription: string;
+          benefits: string[];
+          cropTags: string[];
+        }) =>
+          `${product.name} (${product.slug}) — ${product.shortDescription}. Переваги: ${product.benefits.join(', ')}. Культури: ${product.cropTags.join(', ')}.`
+      )
+      .join('\n');
 
+    const programContext = relevantPrograms
+      .map(
+        (program: {
+          title: string;
+          targetCrops: string[];
+          targetProblems: string[];
+          description: string;
+        }) =>
+          `${program.title} — культури: ${program.targetCrops.join(', ')}; задачі: ${program.targetProblems.join(', ')}. ${program.description}`
+      )
+      .join('\n');
+
+    const apiKey = this.configService.get<string>('GROQ_API_KEY');
+
+    if (!apiKey) {
       return {
-        reply:
-          shortlisted.length > 0
-            ? `Знайшов ${shortlisted.length} релевантні продукти. Можу допомогти порівняти або підібрати норму внесення.`
-            : 'Не знайшов точного збігу. Рекомендую консультацію агронома для точного підбору.',
-        products: shortlisted,
-        cta: shortlisted.length > 0 ? 'lead_form' : 'consultation'
+        reply: 'AI-ключ не налаштований. Заповніть GROQ_API_KEY у .env.',
+        suggestedProducts: relevantProducts,
+        suggestedPrograms: relevantPrograms,
+        leadCaptureRecommended: true
       };
     }
 
-    const kbContext = await this.buildKnowledgeBaseContext(message);
-    const reply = await this.aiService.chat(
-      SYSTEM_PROMPT,
-      `Intent: ${intent}\nПитання: ${message}\nКонтекст:\n${kbContext}`
-    );
+    const client = new Groq({ apiKey });
+    const model = this.configService.get<string>('GROQ_MODEL') ?? 'llama-3.3-70b-versatile';
+
+    const completion = await client.chat.completions.create({
+      model,
+      temperature: 0.3,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Ти — AI Senior Agronomy Sales Assistant для B2B-агросайту Vitera. Відповідай українською. Давай практичні рекомендації щодо підбору добрив, але не вигадуй характеристик. Якщо доречно, запроси контакт для персонального підбору.'
+        },
+        {
+          role: 'system',
+          content: `Релевантні продукти:\n${productContext || 'Наразі немає точних збігів.'}\n\nРелевантні програми:\n${programContext || 'Наразі немає програм за заданими параметрами.'}`
+        },
+        {
+          role: 'user',
+          content: `Запит клієнта: ${dto.message}\nКультура: ${dto.crop ?? 'не вказано'}\nПроблема: ${dto.problem ?? 'не вказано'}`
+        }
+      ]
+    });
 
     return {
-      reply,
-      products: [],
-      cta: intent === 'consultation' ? 'consultation' : 'lead_form'
+      reply: completion.choices[0]?.message?.content ?? 'Не вдалося сформувати рекомендацію.',
+      suggestedProducts: relevantProducts,
+      suggestedPrograms: relevantPrograms,
+      leadCaptureRecommended: dto.contactRequested ?? relevantProducts.length > 0
     };
-  }
-
-  private detectIntent(message: string): BotIntent {
-    const normalized = message.toLowerCase();
-    if (/(ціна|продукт|добрив|npk|мікроелемент|каталог)/.test(normalized)) {
-      return 'product';
-    }
-
-    if (/(консультац|агроном|зв\W*яз|допоможіть)/.test(normalized)) {
-      return 'consultation';
-    }
-
-    return 'selection';
-  }
-
-  private async buildKnowledgeBaseContext(message: string) {
-    const products = await this.productsService.findAll({ q: message });
-
-    return JSON.stringify(
-      {
-        products: products.slice(0, 5).map((product) => ({
-          name: product.name,
-          shortDesc: product.shortDesc,
-          category: product.category.title
-        })),
-        programs: [
-          'Інтенсивна програма живлення зернових',
-          'Антистрес програма для овочів',
-          'Стартова програма для соняшнику'
-        ],
-        problems: ['дефіцит азоту', 'стрес від посухи', 'повільний старт вегетації']
-      },
-      null,
-      2
-    );
   }
 }
