@@ -1,57 +1,67 @@
-# Agro AI Platform
+# Vitera B2B Agro Platform
 
-Монорепозиторій B2B агросайту з AI-ботом, API та базою лідів.
+Production-oriented monorepo scaffold for a Vitera Ukraine redesign focused on fertilizer selection, AI recommendations, lead capture, and CRM handoff.
 
-## Структура
+## Stack
 
-- `apps/frontend` — Next.js (App Router, SSR, Tailwind)
-- `apps/backend` — NestJS REST API + Prisma + Groq
-- `packages/types` — спільні типи
-- `packages/ui` — спільні UI артефакти
+- Frontend: Next.js App Router, TypeScript, Tailwind CSS
+- Backend: NestJS, REST API
+- Database: PostgreSQL with Prisma
+- Search: Meilisearch
+- AI: Groq
+- CMS-ready content model: Prisma-first, extensible to Strapi or a custom admin
 
-## Ключові endpoint-и
+## Repository structure
 
-- `GET /api/products`
-- `GET /api/products/:slug`
-- `POST /api/leads`
-- `POST /api/bot/query`
-
-## AI bot flow
-
-`user -> quick replies/chat -> /api/bot/query -> intent detection -> response + CTA -> lead form -> /api/leads -> DB/CRM`
-
-## Запуск
-
-1. Встановіть залежності:
-
-```bash
-pnpm install
+```text
+apps/
+  frontend/   # Next.js storefront and lead flows
+  backend/    # NestJS API, Prisma, Groq bot
+packages/
+  ui/         # Shared UI components
+  types/      # Shared TypeScript contracts
 ```
 
-2. Скопіюйте ENV:
+## Quick start
+
+1. Copy `.env.example` to `.env` and fill in the real values.
+2. Install dependencies:
 
 ```bash
-cp .env.example .env
+npm install
 ```
 
-3. Підніміть PostgreSQL та Meilisearch (docker-compose або локально).
-
-4. Згенеруйте Prisma client та міграцію:
+3. Generate Prisma client:
 
 ```bash
-pnpm --filter @agro-ai/backend prisma:generate
-pnpm --filter @agro-ai/backend prisma:migrate
+npm run db:generate
 ```
 
-5. Запустіть apps:
+4. Run the apps in separate terminals:
 
 ```bash
-pnpm dev
+npm run dev:backend
+npm run dev:frontend
 ```
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:4000/api`
+5. Optional database workflow:
 
-## CMS
+```bash
+npm run db:migrate
+npm run db:seed
+```
 
-Рекомендовано підключити Strapi як headless CMS для сторінок `blog/services/solutions` і збереження SEO URL.
+## Current scope
+
+- Monorepo initialized
+- NestJS backend implemented with products, leads, and bot endpoints
+- Prisma schema and seed data added
+- Next.js frontend scaffolded with required routes and shared components
+
+## API
+
+- `GET /health`
+- `GET /products`
+- `GET /products/:slug`
+- `POST /leads`
+- `POST /bot/query`

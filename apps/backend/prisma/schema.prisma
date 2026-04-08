@@ -7,75 +7,125 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Product {
-  id          String      @id @default(cuid())
-  slug        String      @unique
-  name        String
-  shortDesc   String
-  description String
-  nPk         String?
-  phase       String?
-  culture     String?
-  categoryId  String
-  category    Category    @relation(fields: [categoryId], references: [id])
-  programs    Program[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+enum LeadStatus {
+  NEW
+  QUALIFIED
+  CONTACTED
+  WON
+  LOST
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  slug      String    @unique
-  title     String
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  name           String
+  description    String?
+  seoTitle       String?
+  seoDescription String?
+  products       Product[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Page {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  path           String   @unique
+  title          String
+  content        String
+  excerpt        String?
+  seoTitle       String?
+  seoDescription String?
+  sourceUrl      String   @unique
+  sourceLinks    String[]
+  isPublished    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Program {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  crop        String
-  problem     String
-  stage       String
-  description String
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  description    String
+  targetCrops    String[]
+  targetProblems String[]
+  seoTitle       String?
+  seoDescription String?
+  products       Product[] @relation("ProgramProducts")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  slug             String    @unique
+  sku              String?   @unique
+  name             String
+  shortDescription String
+  description      String
+  manufacturer     String?
+  formFactor       String?
+  application      String?
+  cropTags         String[]
+  benefits         String[]
+  composition      Json?
+  dosage           Json?
+  seoTitle         String?
+  seoDescription   String?
+  isPublished      Boolean   @default(true)
+  categoryId       String
+  category         Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  programs         Program[] @relation("ProgramProducts")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Lead {
-  id         String   @id @default(cuid())
-  name       String
-  phone      String
-  email      String?
-  company    String?
-  message    String?
-  source     String   @default("site")
-  status     String   @default("new")
-  createdAt  DateTime @default(now())
+  id                    String     @id @default(cuid())
+  name                  String
+  phone                 String
+  email                 String?
+  company               String?
+  region                String?
+  acreage               Int?
+  cropFocus             String?
+  message               String?
+  source                String     @default("website")
+  status                LeadStatus @default(NEW)
+  recommendedProductIds String[]
+  recommendedProgramIds String[]
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
 }
 
 model Article {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  excerpt     String
-  content     String
-  publishedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  excerpt        String
+  content        String
+  coverImage     String?
+  seoTitle       String?
+  seoDescription String?
+  isPublished    Boolean  @default(true)
+  publishedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Case {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  challenge   String
-  solution    String
-  result      String
-  region      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  summary        String
+  content        String
+  crop           String?
+  region         String?
+  outcome        String?
+  seoTitle       String?
+  seoDescription String?
+  isPublished    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
