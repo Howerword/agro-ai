@@ -25,10 +25,13 @@ type FormState = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
+const inputClass =
+  'w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-brand-500 focus:outline-none';
+
 export function LeadForm({
   title = 'Запитати персональну рекомендацію',
   description = 'Залиште контакти, і агроном або менеджер підбере рішення під вашу культуру та задачу.',
-  submitLabel = 'Надіслати в CRM',
+  submitLabel = 'Надіслати заявку',
   source = 'website',
   defaultMessage = '',
   defaultCropFocus = '',
@@ -80,7 +83,7 @@ export function LeadForm({
       setForm(initialState);
     } catch (submitError) {
       setStatus('error');
-      setError(submitError instanceof Error ? submitError.message : 'Не вдалося надіслати лід.');
+      setError(submitError instanceof Error ? submitError.message : 'Не вдалося надіслати заявку.');
     }
   }
 
@@ -89,7 +92,7 @@ export function LeadForm({
       onSubmit={onSubmit}
       className={`rounded-[32px] bg-white text-stone-900 shadow-2xl ${compact ? 'p-6' : 'p-8'}`}
     >
-      <p className="text-sm uppercase tracking-[0.2em] text-brand-700">Lead capture</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">Залишити заявку</p>
       <h2 className="mt-3 text-2xl font-semibold">{title}</h2>
       <p className="mt-3 text-sm leading-6 text-stone-600">{description}</p>
 
@@ -98,46 +101,47 @@ export function LeadForm({
           required
           value={form.name}
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-          className="rounded-2xl border border-stone-200 px-4 py-3"
-          placeholder="Ім'я"
+          className={inputClass}
+          placeholder="Ім'я *"
         />
         <input
           required
           value={form.phone}
           onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
-          className="rounded-2xl border border-stone-200 px-4 py-3"
-          placeholder="Телефон"
+          className={inputClass}
+          placeholder="Телефон *"
+          type="tel"
         />
         <input
           value={form.email}
           onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-          className="rounded-2xl border border-stone-200 px-4 py-3"
+          className={inputClass}
           placeholder="Email"
           type="email"
         />
         <input
           value={form.company}
           onChange={(event) => setForm((current) => ({ ...current, company: event.target.value }))}
-          className="rounded-2xl border border-stone-200 px-4 py-3"
+          className={inputClass}
           placeholder="Компанія"
         />
         <input
           value={form.cropFocus}
           onChange={(event) => setForm((current) => ({ ...current, cropFocus: event.target.value }))}
-          className="rounded-2xl border border-stone-200 px-4 py-3"
+          className={inputClass}
           placeholder="Культура / запит"
         />
         <textarea
           value={form.message}
           onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
-          className="min-h-28 rounded-2xl border border-stone-200 px-4 py-3"
+          className={`${inputClass} min-h-28 resize-none`}
           placeholder="Опишіть проблему або задачу"
         />
       </div>
 
       {status === 'success' ? (
         <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Дякуємо! Лід збережено, команда вже може зв’язатися з вами.
+          Дякуємо! Заявку збережено, команда вже може зв&apos;язатися з вами.
         </p>
       ) : null}
       {status === 'error' ? (
@@ -147,7 +151,7 @@ export function LeadForm({
       <button
         type="submit"
         disabled={status === 'loading'}
-        className="mt-6 rounded-full bg-brand-700 px-5 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-6 w-full rounded-full bg-brand-700 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-900 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === 'loading' ? 'Надсилаємо...' : submitLabel}
       </button>
